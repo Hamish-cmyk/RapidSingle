@@ -34,8 +34,8 @@ def SpecialIndex():
     original = readin("index.ndx")
     ##################################### select relevant IDs using MDA
     u = mda.Universe(f'i{name}.pdb')
-    solvent = u.select_atoms('resname TIP3 or resname CLA')
-    protein = u.select_atoms(f'resname KE00 or resname FES0 or resname NN or resname NQ or resname NFE or resname NKE or resname NF or resname NA')
+    solvent = u.select_atoms('resname TIP3 or resname CLA or resname SOD')
+    protein = u.select_atoms(f'resname KE00 or resname FES0 or resname NN or resname NQ or resname NFE or resname NKE or resname NF or resname NK or resname PHE or resname ASP or resname LYS')
     ##################################### write atom IDs to a new list as a loop
     Solute = []
     Solvent = []
@@ -73,12 +73,25 @@ def FixYouanSH():
 
 #####################################################################################
 
+if len(sys.argv) < 2:
+    print("NO SYS.ARGV'S")
+    sys.exit()
+else:
+    SystemID = sys.argv[1]
+
 test =  True
 root = '/users/fjb15167/LSAtomistic'
 
 if test == True:
-    sequences = ['Nf-Nk-Nf', 'Nf-Nke-Nf', 'Nk-Nf-Nf', 'Nke-Nf-Nf']
-    ions      = [2,2,2,2]
+    sequences = ['KFF','DFF','FKF','FDF','FF']
+    sequences = ['DFF','FDF']
+    ions      = [1,1,1,1,0]
+    states    = ['TT']
+    # sequences = ['Nk-Nf-Nf']
+    # ions      = [2]
+    # states = ['CC', 'CT', 'TC', 'TT']
+    # sequences = ['Nf-Nk-Nf', 'Nf-Nke-Nf', 'Nk-Nf-Nf', 'Nke-Nf-Nf']
+    # ions      = [2,2,2,2]
     ##########################
     # sequences = ['Nf-Na-Nf']
     # ions      = [1]
@@ -108,12 +121,17 @@ for i, each in enumerate(sequences):
         ######################################
         os.chdir(subject)
         ######################################
+        if each == 'DFF' or each == 'FDF':
+            ionID = 'sodium.pdb'
+        else:
+            ionID = 'chloride.pdb'
         box  = '3 3 3'  # !! if you change this then update SpecialIndex function!!
         cmd1 = f'gmx_mpi insert-molecules -ci ../{those}.pdb -nmol 1 -box {box} -o box.pdb'
-        cmd2 = f'gmx_mpi insert-molecules -f box.pdb -ci ../../chloride.pdb -nmol {ions[i]} -box {box} -o box.pdb'
+        cmd2 = f'gmx_mpi insert-molecules -f box.pdb -ci ../../{ionID} -nmol {ions[i]} -box {box} -o box.pdb'
         cmd3 = f'gmx_mpi solvate -cp box.pdb -box {box} -o box.pdb'
         os.system(cmd1)
-        os.system(cmd2)
+        if ions[i] > 0:
+            os.system(cmd2)
         os.system(cmd3)
         ######################################
         box      = readin('box.pdb')
@@ -121,10 +139,12 @@ for i, each in enumerate(sequences):
         with open('box.pdb','w') as box:
             box.write(boxwrite)
         ##################################################################
-        os.system('cat box.pdb | grep -v CLA | grep -v TIP3 > peptoid.pdb')
-        os.system('cat box.pdb | grep CLA    > ions.pdb')
-        os.system('cat box.pdb | grep TIP3   > water.pdb')                      ## pull water...
-        psfgen = readin('../../patch_temp.pgn')
+        os.system('cat box.pdb | grep -v CLA | grep -v TIP3 | grep -v SOD > peptoid.pdb')
+        os.system('cat box.pdb | grep TIP3  > water.pdb')                      ## pull water...
+        if each == 'DFF' or each == 'FDF':
+            os.system('cat box.pdb | grep SOD > ions.pdb')
+        else:
+            os.system('cat box.pdb | grep CLA > ions.pdb')
         ########################################
         if 'Nfes-' in name:
             patch = 'NTER2'
@@ -134,21 +154,32 @@ for i, each in enumerate(sequences):
             patch = 'NTER3'
         else:
             print('Patch Undefined!')
-            sys.exit()
-        ########################################
-        with open('patch.pgn','w') as pgn:
-            pgn.write(psfgen.replace('XXX',name).replace('ACTION',patch))
-        os.system('vmd -dispdev text -e patch.pgn > psf.log')
-        ########################################
-        reader = readin('../../generate_topology.tcl')
+            pass
+        #########################################
+        if SystemID == 'toid':
+            psfgen = readin('../../patch_temp.pgn')
+            with open('patch.pgn','w') as pgn:
+                pgn.write(psfgen.replace('XXX',name).replace('ACTION',patch))
+            os.system('vmd -dispdev text -e patch.pgn')
+        if SystemID == 'tide':
+            psfgen = readin('../../peptide_patch_temp.pgn')
+            with open('peptide_patch.pgn','w') as pgn:
+                pgn.write(psfgen.replace('XXX',name))
+            os.system('vmd -dispdev text -e peptide_patch.pgn')
+        #########################################
+        if SystemID == 'toid':
+            reader = readin('../../generate_topology.tcl')
+        if SystemID == 'tide':
+            reader = readin('../../peptide_generate_topology.tcl')
+        #########################################
         with open('gen.tcl','w') as tcl:
             tcl.write(reader.replace('XXX',name))
         os.system('vmd -dispdev text -e gen.tcl')
-        ########################################
+        #########################################
         cmd1 = f'gmx_mpi editconf -f i{name}.pdb -o i{name}.gro -box 3 3 3'
         os.system(cmd1)
         SpecialIndex()
-        #########################################################################
+        # #########################################################################
         os.system(f'gmx_mpi grompp -f ../../min.mdp -c i{name}.gro -p fiber.top -o min.tpr -n SpecialIndex.ndx > grompp_min.log')
         os.system('mpirun -np 4 gmx_mpi mdrun -s min.tpr -v -deffnm min -ntomp 1')
         os.system('gmx_mpi grompp -f ../../NPT.mdp -c min.gro -p fiber.top -o NPT.tpr -n SpecialIndex.ndx > grompp_NPT.log')
