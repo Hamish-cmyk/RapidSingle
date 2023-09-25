@@ -57,11 +57,12 @@ def testplot2():
         ###################################################################
         traj = mda.Universe(gro,xtc)                                        ## names error means xtg,gro order is wrong
         # #################################################################
-        empty_diheds, empty_rhos = np.ones((4001, 1)), np.ones((4001, 1))
+        #empty_diheds, empty_rhos = np.ones((4001, 1)), np.ones((4001, 1))
+        empty_diheds, empty_rhos = np.ones((5001, 1)), np.ones((5001, 1))
         for ts in range(0, len(traj.trajectory)):
             print(f'parsing frame {ts}')
             traj.trajectory[ts]
-            reduced2a = traj.select_atoms('resname F000 or resname NF or resname FES0 or resname NFE and name CG or name CZ')
+            reduced2a = traj.select_atoms('resname F000 or resname NF or resname FES0 or resname NFE or resname PHE and name CG or name CZ')
             count = 0
             for mols in range(0, 1):
                 id3   = np.array((reduced2a.indices[1 + count], reduced2a.indices[0 + count], reduced2a.indices[2 + count], reduced2a.indices[3 + count]))
@@ -98,22 +99,28 @@ def WeCompare():
 
 ########################################################################################################################
 root = '/users/fjb15167/LSAtomistic'
-subjects = ['Nf-Nn-Nf','Nfes-Nke-Nfes','Nfes-Nn-Nfes','Nfes-Nq-Nfes','Nfe-Nke-Nfe']
+# subjects = ['Nf-Nn-Nf','Nfes-Nke-Nfes','Nfes-Nn-Nfes','Nfes-Nq-Nfes','Nfe-Nke-Nfe']
+subjects = ['Ac-Nf-Nf','Nf-Nk-Nf','Nf-Nke-Nf','Nk-Nf-Nf','Nke-Nf-Nf']
 states   = ['CC','CT','TC','TT']
-test     = True
 
-explore  = True    ## measure frequency of 30 degree lambda swings from trajectory
-EMD      = False   ## measure WS metric of dihedral array of sequence from FF reference
-stats    = False   ## extract occupancy of alpha, beta and gamma domains
-SwitchResults = pd.DataFrame(columns=states)
+test     = False
+explore  = True                                 ## measure frequency of 30 degree lambda swings from trajectory
+EMD      = False                                ## measure WS metric of dihedral array of sequence from FF reference
+stats    = False                                ## extract occupancy of alpha, beta and gamma domains
 
 if test == True:
-    subjects = ['Nf-Na-Nf', 'Nfe-Nke-Nfe', 'Nf-Nn-Nf', 'Nfes-Nke-Nfes', 'Nfes-Nn-Nfes', 'Nfes-Nq-Nfes']
+    subjects = ['Nf-Nk-Nf']
     states = ['CC', 'CT', 'TC', 'TT']
+    # subjects = ['Nf-Na-Nf', 'Nfe-Nke-Nfe', 'Nf-Nn-Nf', 'Nfes-Nke-Nfes', 'Nfes-Nn-Nfes', 'Nfes-Nq-Nfes']
+    # states = ['CC', 'CT', 'TC', 'TT']
 else:
-    subjects = ['Nf-Nn-Nf']
-    states = ['CC', 'CT', 'TC', 'TT']
+    pass
+    # subjects  = ['KFF','DFF','FKF','FDF','FF']
+    # states    = ['TT']
+    # subjects = ['Nf-Nke-Nf', 'Nf-Nk-Nf', 'Nke-Nf-Nf', 'Nk-Nf-Nf']
+    # states = ['CC', 'CT', 'TC', 'TT']
 
+SwitchResults = pd.DataFrame(columns=states)
 for i in range(0,len(subjects)):
     print('_____________________________________________________________________________________________________________\n')
     print(subjects[i])
