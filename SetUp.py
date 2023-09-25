@@ -35,7 +35,7 @@ def SpecialIndex():
     ##################################### select relevant IDs using MDA
     u = mda.Universe(f'i{name}.pdb')
     solvent = u.select_atoms('resname TIP3 or resname CLA or resname SOD')
-    protein = u.select_atoms(f'resname KE00 or resname FES0 or resname NN or resname NQ or resname NFE or resname NKE or resname NF or resname NK or resname PHE or resname ASP or resname LYS')
+    protein = u.select_atoms(f'resname KE00 or resname FES0 or resname NN or resname NQ or resname NFE or resname NKE or resname NF or resname NK or resname PHE or resname ASP or resname LYS or resname LEU or resname DLEUA')
     ##################################### write atom IDs to a new list as a loop
     Solute = []
     Solvent = []
@@ -83,10 +83,13 @@ test =  True
 root = '/users/fjb15167/LSAtomistic'
 
 if test == True:
-    sequences = ['KFF','DFF','FKF','FDF','FF']
-    sequences = ['DFF','FDF']
-    ions      = [1,1,1,1,0]
-    states    = ['TT']
+    # sequences = ['KFF','DFF','FKF','FDF','FF']
+    # sequences = ['DFF','FDF']
+    # sequences = ['FLF','FdLF']
+    # sequences = ['FdLF']
+    # ions      = [1,1,1,1,0]
+    # ions      = [0,0]
+    # states    = ['TT']
     # sequences = ['Nk-Nf-Nf']
     # ions      = [2]
     # states = ['CC', 'CT', 'TC', 'TT']
@@ -99,6 +102,9 @@ if test == True:
     # sequences = ['Nfe-Nke-Nfe']
     # ions      = [2]
     # states    = ['CC', 'CT', 'TC', 'TT']
+    sequences = ['Ac-Nf-Nf']
+    states    = ['CC', 'CT', 'TC', 'TT']
+    ions      = [0]
 else:
     pass
     # sequences = ['Nf-Nn-Nf', 'Nfe-Nke-Nfe', 'Nfes-Nke-Nfes', 'Nfes-Nn-Nfes', 'Nfes-Nq-Nfes']
@@ -149,7 +155,10 @@ for i, each in enumerate(sequences):
         if 'Nfes-' in name:
             patch = 'NTER2'
         elif 'Nf-' in name:
-            patch = 'NTER'
+            if 'Ac-Nf-Nf' in name:
+                patch = 'ACE'
+            else:
+                patch = 'NTER'
         elif 'Nfe-' in name:
             patch = 'NTER3'
         else:
